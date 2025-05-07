@@ -116,10 +116,10 @@ The application will be accessible at:
 ## Project Structure
 
 - `frontend/masonry-frontend-next/`: Contains the Next.js frontend application
-- `routers/`: FastAPI route handlers
-- `config/`: Configuration files
-- `scripts/`: Utility scripts
-- `test/`: Test files
+- `routers/`: FastAPI route handlers (app.py)
+- `config/`: Configuration files for LLM Client and Redis
+- `scripts/`: Utility scripts [analyzer, newsAggregator, webScraper, web(reserach)]
+- `test/`: Test files for different functions (utilised in development env)
 - `main.py`: Main FastAPI application entry point
 - `launch.py`: Application launcher script
 
