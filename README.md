@@ -1,10 +1,11 @@
 # Masonry Assignment
 
-This project is a web application that combines FastAPI backend with a Streamlit frontend, using Redis for caching and data storage.
+This project is a web application that combines FastAPI backend with a Next.js frontend, using Redis for caching and data storage.
 
 ## Prerequisites
 
 - Python 3.8 or higher
+- Node.js and npm
 - Docker and Docker Compose
 - Git
 
@@ -33,7 +34,13 @@ source .venv/bin/activate
 ### 3. Install Dependencies
 
 ```bash
+# Install Python dependencies
 pip install -r requirements.txt
+
+# Install frontend dependencies
+cd frontend/masonry-frontend-next
+npm install
+cd ../..
 ```
 
 ### 4. Set Up Redis using Docker
@@ -61,7 +68,7 @@ cp .example.env .env
 You have two options to run the application:
 
 #### Option 1: Using launch.py (Recommended)
-This will start both the FastAPI backend and Streamlit frontend automatically:
+This will start both the FastAPI backend and Next.js frontend automatically:
 
 ```bash
 python launch.py
@@ -69,7 +76,7 @@ python launch.py
 
 The script will:
 - Start the FastAPI backend on port 8000
-- Start the Streamlit frontend on port 8501
+- Start the Next.js frontend on port 3000
 - Handle graceful shutdown of both services
 - Provide combined logging output
 
@@ -78,21 +85,22 @@ If you prefer to run the services separately:
 
 1. Start the FastAPI backend:
 ```bash
-uvicorn main:app --reload
+uvicorn routers.app:app --host 0.0.0.0 --port 8000
 ```
 
-2. In a separate terminal, start the Streamlit frontend:
+2. In a separate terminal, start the Next.js frontend:
 ```bash
-streamlit run frontend/app.py
+cd frontend/masonry-frontend-next
+npm run dev
 ```
 
 The application will be accessible at:
 - Backend API: http://localhost:8000
-- Frontend: http://localhost:8501
+- Frontend: http://localhost:3000
 
 ## Project Structure
 
-- `frontend/`: Contains the Streamlit frontend application
+- `frontend/masonry-frontend-next/`: Contains the Next.js frontend application
 - `routers/`: FastAPI route handlers
 - `config/`: Configuration files
 - `scripts/`: Utility scripts
@@ -123,7 +131,12 @@ cat .env
 
 3. Verify all dependencies are installed:
 ```bash
+# Check Python dependencies
 pip list
+
+# Check Node.js dependencies
+cd frontend/masonry-frontend-next
+npm list
 ```
 
 4. Check the application logs for any error messages 
