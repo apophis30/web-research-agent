@@ -8,27 +8,8 @@ The Web Research Agent is an AI-powered system designed to perform comprehensive
 
 ### 2.1 System Architecture Diagram
 
-```
-┌───────────────┐     ┌───────────────┐     ┌───────────────┐
-│   User Query  │────▶│  Query Parser │────▶│ Research Plan │
-└───────────────┘     └───────────────┘     └───────┬───────┘
-                                                    │
-                                                    ▼
-┌───────────────┐     ┌───────────────┐     ┌───────────────┐
-│  Information  │◀────│  Content      │◀────│  Web Search   │
-│  Synthesis    │     │  Processing   │     │  & Scraping   │
-└───────┬───────┘     └───────────────┘     └───────────────┘
-        │                                          ▲
-        │                                          │
-        │                                   ┌───────────────┐
-        │                                   │News Aggregator│
-        │                                   └───────────────┘
-        ▼
-┌───────────────┐
-│  Response     │
-│  Generation   │
-└───────────────┘
-```
+![System Architecture](assets/query_path.png)
+
 
 ### 2.2 Decision Flow Process
 
@@ -37,11 +18,13 @@ The Web Research Agent is an AI-powered system designed to perform comprehensive
    - Key components of the query
    - Appropriate search strategy
    - Required information types
+   ![Query Analysis](assets/query_analysis.png)
 
-2. **Search Strategy Selection**: Based on query analysis, the agent selects the optimal search approach:
-   - General web search for factual queries
-   - News aggregation for current events
-   - Deep scraping for comprehensive research needs
+2. **Search Strategy Selection**: The system analyzes queries and selects the best search approach based on intent and relevance:
+   - Performs intent-based query analysis to choose between factual, temporal, or analytical search styles.
+   - Extracts and evaluates 3 candidate queries per user prompt using LLM and regex parsing.
+   - Scores candidate queries using a BM25-like ranking mechanism, prioritizing recency, phrasing, and term overlap.
+   - Selects the top-scoring query as the final optimized search query for execution.
 
 3. **Information Gathering**: The agent executes the search strategy and collects information from multiple sources.
 
@@ -64,7 +47,7 @@ The Web Research Agent is an AI-powered system designed to perform comprehensive
 The agent employs robust error handling at each stage:
 
 - **Unreachable Websites**: If a website is unreachable, the agent logs the error, continues with available sources, and notes the limitation in the final response.
-- **Rate Limiting**: Implements exponential backoff and rotates user agents to handle rate limiting.
+- **[TODO]** **Rate Limiting**: Implement exponential backoff and rotates user agents to handle rate limiting.
 - **Parsing Failures**: If content extraction fails, the agent falls back to snippets provided by search APIs.
 - **Contradictory Information**: The agent identifies contradictions, evaluates source reliability, and presents the most credible information with appropriate caveats.
 - **Timeout Handling**: All web operations have configurable timeouts with appropriate fallback mechanisms.
@@ -76,7 +59,6 @@ The agent employs robust error handling at each stage:
 **Input**: User query, search parameters (depth, result limit)  
 **Output**: Search results with URLs, titles, and snippets  
 **Implementation**: Uses the Serper API to perform Google searches with configurable parameters.  
-**Decision Making**: Results are ranked by relevance and selected for further processing based on query relevance.
 
 ### 3.2 Web Scraper/Crawler
 
@@ -84,7 +66,7 @@ The agent employs robust error handling at each stage:
 **Output**: Structured content including main text, headings, tables, and links  
 **Implementation**: 
 - Basic scraper uses BeautifulSoup for HTML parsing
-- Advanced scraper uses Pyppeteer (Puppeteer Python port) for JavaScript-rendered content
+**[TODO]**- Advanced scraper uses Pyppeteer (Puppeteer Python port) for JavaScript-rendered content [Browser Failing Unexpcetdly]
 - Content is converted to markdown for consistent processing
 
 **Decision Making**: Determines content relevance and extracts key information based on structural elements and semantic context.
@@ -96,12 +78,16 @@ The agent employs robust error handling at each stage:
 **Implementation**: Uses LLM (GPT-4o-mini) to evaluate content based on predefined criteria.  
 **Decision Making**: Analysis results inform source prioritization and synthesis, with higher-scoring content given more weight.
 
+![Content Analysis](assets/content_analysis.png)
+
 ### 3.4 News Aggregator
 
 **Input**: News-related query, time range, result limit  
 **Output**: Recent news articles with source, date, title, and snippet  
 **Implementation**: Uses specialized search queries and filters to focus on news sources.  
 **Decision Making**: News is prioritized by recency and relevance, with particular attention to source credibility.
+
+![News Aggregator](assets/news_aggregator.png)
 
 ## 4. Core Agent Capabilities
 
@@ -111,7 +97,6 @@ The agent analyzes queries to:
 - Identify research intent (factual, exploratory, news, etc.)
 - Break down complex questions into components
 - Detect time sensitivity (recent vs. historical information)
-- Determine appropriate source types (academic, news, encyclopedic, etc.)
 
 Implementation: Uses LLM with specialized prompting to extract query characteristics and formulate research strategy.
 

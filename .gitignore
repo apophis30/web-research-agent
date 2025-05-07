@@ -2,4 +2,5 @@
 .env
 *.tar
 *.json
+docs-x.md
 __pycache__/
