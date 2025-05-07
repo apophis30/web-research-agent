@@ -1,142 +1,36 @@
-# Masonry Assignment
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-This project is a web application that combines FastAPI backend with a Next.js frontend, using Redis for caching and data storage.
+## Getting Started
 
-## Prerequisites
-
-- Python 3.8 or higher
-- Node.js and npm
-- Docker and Docker Compose
-- Git
-
-## Setup Instructions
-
-### 1. Clone the Repository
+First, run the development server:
 
 ```bash
-git clone <repository-url>
-cd masonry-assignment
-```
-
-### 2. Set Up Python Virtual Environment
-
-```bash
-# Create virtual environment
-python -m venv .venv
-
-# Activate virtual environment
-# On Windows:
-.venv\Scripts\activate
-# On Unix or MacOS:
-source .venv/bin/activate
-```
-
-### 3. Install Dependencies
-
-```bash
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Install frontend dependencies
-cd frontend/masonry-frontend-next
-npm install
-cd ../..
-```
-
-### 4. Set Up Redis using Docker
-
-```bash
-# Pull and run Redis container
-docker run --name redis-cache -p 6379:6379 -d redis:latest
-```
-
-### 5. Environment Configuration
-
-1. Copy the example environment file:
-```bash
-cp .example.env .env
-```
-
-2. Update the `.env` file with your credentials:
-- `OPENAI_API_KEY`: Your OpenAI API key
-- `REDIS_URL`: Redis connection URL (default: redis://localhost:6379)
-- `SERPER_API_KEY_1`: Your Serper API key
-- `SERP_API_KEY`: Your SERP API key
-
-### 6. Running the Application
-
-You have two options to run the application:
-
-#### Option 1: Using launch.py (Recommended)
-This will start both the FastAPI backend and Next.js frontend automatically:
-
-```bash
-python launch.py
-```
-
-The script will:
-- Start the FastAPI backend on port 8000
-- Start the Next.js frontend on port 3000
-- Handle graceful shutdown of both services
-- Provide combined logging output
-
-#### Option 2: Manual Start
-If you prefer to run the services separately:
-
-1. Start the FastAPI backend:
-```bash
-uvicorn routers.app:app --host 0.0.0.0 --port 8000
-```
-
-2. In a separate terminal, start the Next.js frontend:
-```bash
-cd frontend/masonry-frontend-next
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-The application will be accessible at:
-- Backend API: http://localhost:8000
-- Frontend: http://localhost:3000
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Project Structure
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-- `frontend/masonry-frontend-next/`: Contains the Next.js frontend application
-- `routers/`: FastAPI route handlers
-- `config/`: Configuration files
-- `scripts/`: Utility scripts
-- `test/`: Test files
-- `main.py`: Main FastAPI application entry point
-- `launch.py`: Application launcher script
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Additional Notes
+## Learn More
 
-- The Redis instance runs on port 6379 by default
-- Make sure all required API keys are properly configured in the `.env` file
-- The application uses async operations for better performance
-- Redis is used for caching and temporary data storage
+To learn more about Next.js, take a look at the following resources:
 
-## Troubleshooting
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-If you encounter any issues:
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-1. Ensure Redis is running:
-```bash
-docker ps | grep redis
-```
+## Deploy on Vercel
 
-2. Check if all environment variables are properly set:
-```bash
-cat .env
-```
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-3. Verify all dependencies are installed:
-```bash
-# Check Python dependencies
-pip list
-
-# Check Node.js dependencies
-cd frontend/masonry-frontend-next
-npm list
-```
-
-4. Check the application logs for any error messages 
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
