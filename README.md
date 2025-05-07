@@ -1,36 +1,86 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Web Research Agent Frontend
 
-## Getting Started
+This is the frontend application for the Web Research Agent project, built with [Next.js](https://nextjs.org).
 
-First, run the development server:
+## Local Development
 
+1. Install dependencies:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Run the development server:
+```bash
+npm run dev
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The application will be available at [http://localhost:3000](http://localhost:3000)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## AWS EC2 Deployment (Free Tier)
 
-## Learn More
+### Prerequisites
+- AWS EC2 Linux instance (Free Tier)
+- SSH access to the instance
 
-To learn more about Next.js, take a look at the following resources:
+### Deployment Steps
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Clone the repository:
+```bash
+git clone -b frontend https://github.com/apophis30/web-research-agent.git
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. Update system packages:
+```bash
+sudo apt update
+sudo apt upgrade -y
+```
 
-## Deploy on Vercel
+3. Install Node.js:
+```bash
+sudo apt install nodejs npm -y
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+4. Build the application:
+```bash
+npm install
+npm run build
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+5. Install and configure PM2 for process management:
+```bash
+sudo npm install -g pm2
+pm2 start npm --name "web-research-agent" -- start
+```
+
+### PM2 Commands
+- View running processes: `pm2 list`
+- View logs: `pm2 logs web-research-agent`
+- Restart application: `pm2 restart web-research-agent`
+- Stop application: `pm2 stop web-research-agent`
+
+## Additional Information
+
+- The application uses Next.js for server-side rendering and static site generation
+- Built with TypeScript for type safety
+- Uses modern React features and best practices
+- Optimized for performance and SEO
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── page.tsx        # Main application page
+│   └── layout.tsx      # Root layout component
+├── components/
+│   ├── ui/            # shadcn utility components
+│   ├── NewsTab.tsx
+│   ├── ResearchTab.tsx
+│   ├── Sidebar.tsx
+│   ├── WebpageScraper.tsx
+│   └── WebSearchTab.tsx
+├── hooks/             # Custom React hooks
+├── lib/               # Shadcn utility functions & configurations
+└── utils/
+    └── api.ts         # utility function for making API requests
+```
