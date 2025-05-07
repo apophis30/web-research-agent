@@ -1,0 +1,32 @@
+# Git and VCS
+.git
+.gitignore
+
+# Python environments
+.env
+.venv/
+env/
+venv/
+.Python
+
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.pyd
+
+# Logs and coverage
+*.log
+.coverage
+htmlcov/
+
+# macOS
+.DS_Store
+
+# Tests
+test/
+
+# Others (optional, editor files)
+*.swp
+*.bak
+*.tmp

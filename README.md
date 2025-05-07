@@ -139,4 +139,118 @@ cd frontend/masonry-frontend-next
 npm list
 ```
 
-4. Check the application logs for any error messages 
+4. Check the application logs for any error messages
+
+## AWS EC2 Free Tier Deployment Guide
+
+### Prerequisites
+1. An AWS account
+2. AWS CLI installed and configured
+3. Docker and Docker Compose installed on your EC2 instance
+
+### Deployment Steps
+
+1. **Launch an EC2 Instance (Free Tier)**
+   - Launch a t2.micro instance (eligible for free tier)
+   - Use Ubuntu Server 22.04 LTS
+   - Configure security group to allow inbound traffic on:
+     - Port 22 (SSH)
+     - Port 8000 (API)
+   - Use a key pair for SSH access
+   - Use the default 8GB EBS volume (free tier eligible)
+
+2. **Install Dependencies on EC2**
+   ```bash
+   # Update system
+   sudo apt-get update
+   sudo apt-get upgrade -y
+
+   # Install Docker
+   sudo apt-get install -y docker.io
+
+   # Install Docker Compose
+   sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+   sudo chmod +x /usr/local/bin/docker-compose
+
+   # Add your user to docker group
+   sudo usermod -aG docker $USER
+   # Log out and log back in for group changes to take effect
+   ```
+
+3. **Deploy the Application**
+   ```bash
+   # Clone your repository
+   git clone <your-repository-url>
+   cd web-research-agent
+
+   # Create .env file with your API keys
+   cat > .env << EOL
+   OPENAI_API_KEY=your_api_key_here
+   REDIS_URL=redis://redis:6379
+   EOL
+
+   # Build and start containers
+   docker-compose up -d
+   ```
+
+4. **Verify Deployment**
+   - Check if containers are running:
+     ```bash
+     docker-compose ps
+     ```
+   - Test the API:
+     ```bash
+     curl http://localhost:8000/
+     ```
+
+### Free Tier Considerations
+
+1. **Resource Limits**
+   - t2.micro instance has 1 vCPU and 1GB RAM
+   - Docker containers are configured with resource limits:
+     - Web Research Agent: 0.5 CPU, 512MB RAM
+     - Redis: 0.3 CPU, 256MB RAM
+
+2. **Cost Optimization**
+   - Use t2.micro instance (free tier eligible)
+   - Use 8GB EBS volume (free tier eligible)
+   - Monitor usage to stay within free tier limits
+   - Set up CloudWatch alarms for cost monitoring
+
+3. **Performance Tips**
+   - Keep the application lightweight
+   - Monitor memory usage
+   - Use Redis for caching to reduce API calls
+   - Implement proper error handling and retries
+
+### Maintenance
+
+1. **Viewing Logs**
+   ```bash
+   docker-compose logs -f
+   ```
+
+2. **Updating the Application**
+   ```bash
+   git pull
+   docker-compose down
+   docker-compose up -d --build
+   ```
+
+3. **Stopping the Application**
+   ```bash
+   docker-compose down
+   ```
+
+### Security Considerations
+1. Use AWS Security Groups to restrict access
+2. Keep your OpenAI API key secure
+3. Regularly update your system and dependencies
+4. Implement proper authentication
+5. Use HTTPS in production
+
+### Monitoring
+1. Set up basic CloudWatch monitoring (free tier)
+2. Monitor CPU and memory usage
+3. Set up alarms for resource utilization
+4. Monitor application logs 
