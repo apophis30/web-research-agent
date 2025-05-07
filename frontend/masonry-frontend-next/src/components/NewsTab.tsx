@@ -46,6 +46,40 @@ interface NewsTabProps {
   apiConfig: ApiConfig;
 }
 
+
+/**
+ * NewsTab Component
+ * 
+ * A React component that provides a news search interface with filtering capabilities.
+ * 
+ * Features:
+ * - Search news articles based on user query
+ * - Filter results by time range (1-30 days)
+ * - Control maximum number of results (5-50 articles)
+ * - View results in either card or list format
+ * - Display article details including title, source, date, authors, and summary
+ * 
+ * Props:
+ * @param {Object} apiConfig - Configuration object for API requests
+ * @param {string} apiConfig.apiUrl - Base URL for API requests
+ * @param {string} apiConfig.userId - User identifier for API requests
+ * 
+ * State:
+ * - newsQuery: string - Current search query
+ * - daysBack: number - Number of days to look back (1-30)
+ * - maxResults: number - Maximum number of results to show (5-50)
+ * - isLoading: boolean - Loading state indicator
+ * - error: string | null - Error message if any
+ * - newsResults: NewsResponse | null - Search results
+ * - viewMode: string - Display mode ('cards' or 'list')
+ * 
+ * @example
+ * <NewsTab apiConfig={{ apiUrl: 'https://api.example.com', userId: 'user123' }} />
+ * 
+ * @returns {JSX.Element} A news search interface with results display
+ */
+
+
 export function NewsTab({ apiConfig }: NewsTabProps) {
   const [newsQuery, setNewsQuery] = useState('')
   const [daysBack, setDaysBack] = useState(7)

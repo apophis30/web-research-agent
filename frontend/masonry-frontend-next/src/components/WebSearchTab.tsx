@@ -56,6 +56,48 @@ interface SearchResults {
   relatedSearches?: RelatedSearch[];
 }
 
+
+/**
+ * WebSearchTab Component
+ * 
+ * A React component that provides a comprehensive web search interface with multiple result types
+ * and interactive display options.
+ * 
+ * Features:
+ * - Real-time web search functionality
+ * - Multiple result types:
+ *   - Context results with snippets and summaries
+ *   - News stories with images and metadata
+ *   - Related search suggestions
+ *   - Image results with source links
+ * - Interactive accordion display for detailed results
+ * - Responsive grid layouts for different content types
+ * - Markdown support for rich text display
+ * 
+ * Props:
+ * @param {Object} apiConfig - Configuration object for API requests
+ * @param {string} apiConfig.apiUrl - Base URL for API requests
+ * @param {string} apiConfig.userId - User identifier for API requests
+ * 
+ * State:
+ * - searchQuery: string - Current search query
+ * - isLoading: boolean - Loading state indicator
+ * - error: string | null - Error message if any
+ * - searchResults: SearchResults | null - Search results data
+ * 
+ * SearchResults Structure:
+ * - contexts: SearchContext[] - Main search results with snippets and summaries
+ * - images: SearchImage[] - Image search results with URLs and metadata
+ * - stories: SearchStory[] - News and story results with images and dates
+ * - relatedSearches: RelatedSearch[] - Suggested related search queries
+ * 
+ * @example
+ * <WebSearchTab apiConfig={{ apiUrl: 'https://api.example.com', userId: 'user123' }} />
+ * 
+ * @returns {JSX.Element} A comprehensive web search interface with multiple result displays
+ */
+
+
 export function WebSearchTab({ apiConfig }: { apiConfig: ApiConfig }) {
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [isLoading, setIsLoading] = useState<boolean>(false)

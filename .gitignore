@@ -1,8 +1,6 @@
 .venv/
 .env
 *.tar
-*.json
 docs-x.md
 __pycache__/
-frontend-streamlit/
 frontend/node_modules/

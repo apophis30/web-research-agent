@@ -72,6 +72,118 @@ interface ResearchData {
 // Define research depth options
 type ResearchDepth = 'quick' | 'standard' | 'deep';
 
+
+/**
+ * ResearchTab Component
+ * 
+ * A sophisticated React component that provides comprehensive research capabilities with
+ * multiple depth levels and detailed analysis of research queries and results.
+ * 
+ * @component
+ * @description
+ * This component implements a research interface that combines web search, news analysis,
+ * and content summarization to provide in-depth research results. It supports multiple
+ * research depth levels and provides detailed analysis of the research query and results.
+ * 
+ * Features:
+ * - Multi-depth research capabilities (quick, standard, deep)
+ * - Query intent analysis and component breakdown
+ * - Source tracking and content summarization
+ * - Contradiction detection in research results
+ * - Additional research suggestions
+ * - Tabbed interface for organized result display
+ * - Markdown support for rich text rendering
+ * 
+ * Data Structures:
+ * 
+ * @interface Source
+ * @property {string} [name] - Name or title of the source
+ * @property {string} url - URL of the source
+ * @property {string} [snippet] - Brief excerpt from the source
+ * @property {string} [summarized_content] - AI-generated summary of the source content
+ * 
+ * @interface QueryAnalysis
+ * @property {string} [intent] - Detected intent of the research query
+ * @property {string[]} [components] - Breakdown of query components
+ * @property {string} [search_strategy] - Strategy used for research
+ * @property {string[]} [relevant_sources] - List of relevant source types
+ * @property {string[]} [ambiguities] - Identified ambiguities in the query
+ * 
+ * @interface AdditionalInfo
+ * @property {number} [web_sources] - Number of web sources used
+ * @property {number} [news_sources] - Number of news sources used
+ * @property {string} [contradictions] - Identified contradictions in research
+ * @property {string} [additional_research_suggestions] - Suggested follow-up research
+ * 
+ * @interface ResearchData
+ * @property {string} query - Original research query
+ * @property {string} timestamp - When research was completed
+ * @property {string} [answer] - Main research findings
+ * @property {Source[]} [sources] - List of information sources
+ * @property {QueryAnalysis} [query_analysis] - Analysis of the query
+ * @property {AdditionalInfo} [additional_info] - Supplementary information
+ * @property {string} [research_depth] - Depth level used
+ * 
+ * Props:
+ * @param {Object} apiConfig - Configuration object for API requests
+ * @param {string} apiConfig.apiUrl - Base URL for API requests
+ * @param {string} apiConfig.userId - User identifier for API requests
+ * 
+ * State:
+ * @property {string} researchQuery - Current research query
+ * @property {ResearchDepth} researchDepth - Selected research depth level
+ * @property {boolean} isLoading - Loading state indicator
+ * @property {string|null} error - Error message if any
+ * @property {ResearchData|null} researchData - Research results and analysis
+ * 
+ * Research Depth Levels:
+ * - quick: Basic research with minimal sources
+ * - standard: Comprehensive research with balanced depth
+ * - deep: In-depth research with extensive source analysis
+ * 
+ * @example
+ * // Basic usage
+ * <ResearchTab apiConfig={{ apiUrl: 'https://api.example.com', userId: 'user123' }} />
+ * 
+ * @example
+ * // Example of expected research data structure
+ * const researchData = {
+ *   query: "Impact of AI on healthcare",
+ *   timestamp: "2024-03-20T10:30:00Z",
+ *   answer: "Comprehensive analysis of AI in healthcare...",
+ *   sources: [
+ *     {
+ *       name: "Medical Journal Article",
+ *       url: "https://example.com/article",
+ *       snippet: "Key findings about AI in healthcare...",
+ *       summarized_content: "Summary of the article..."
+ *     }
+ *   ],
+ *   query_analysis: {
+ *     intent: "Understand AI's impact on healthcare",
+ *     components: ["AI", "healthcare", "impact analysis"],
+ *     search_strategy: "Combined medical journals and news sources",
+ *     relevant_sources: ["medical journals", "healthcare news"],
+ *     ambiguities: ["Time period not specified"]
+ *   },
+ *   additional_info: {
+ *     web_sources: 5,
+ *     news_sources: 3,
+ *     contradictions: "Some sources disagree on timeline",
+ *     additional_research_suggestions: "Consider specific AI applications"
+ *   },
+ *   research_depth: "deep"
+ * }
+ * 
+ * @returns {JSX.Element} A comprehensive research interface with detailed analysis display
+ * 
+ * @throws {Error} When API request fails or returns invalid data
+ * 
+ * @see makeApiRequest - For API request implementation
+ * @see ReactMarkdown - For content rendering
+ */
+
+
 export function ResearchTab({ apiConfig }: { apiConfig: ApiConfig }) {
   const [researchQuery, setResearchQuery] = useState<string>('')
   const [researchDepth, setResearchDepth] = useState<ResearchDepth>('standard')

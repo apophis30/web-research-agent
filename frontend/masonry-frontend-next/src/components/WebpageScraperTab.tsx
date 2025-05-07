@@ -31,6 +31,47 @@ interface WebpageScraperTabProps {
   apiConfig: ApiConfig;
 }
 
+
+/**
+ * WebpageScraperTab Component
+ * 
+ * A React component that provides a web scraping interface with content summarization capabilities.
+ * 
+ * Features:
+ * - Scrape content from any publicly accessible webpage
+ * - Optional CSS selector targeting for specific content
+ * - Configurable timeout settings (5-30 seconds)
+ * - Automatic content summarization
+ * - Metadata extraction (title, URL, description)
+ * - Display of both raw and summarized content
+ * 
+ * Props:
+ * @param {Object} apiConfig - Configuration object for API requests
+ * @param {string} apiConfig.apiUrl - Base URL for API requests
+ * @param {string} apiConfig.userId - User identifier for API requests
+ * 
+ * State:
+ * - urlInput: string - Target webpage URL
+ * - selector: string - Optional CSS selector for targeted scraping
+ * - timeout: number - Request timeout in seconds (5-30)
+ * - isLoading: boolean - Loading state indicator
+ * - error: string | null - Error message if any
+ * - scrapedData: ScrapedResponse | null - Scraped content and metadata
+ * 
+ * ScrapedResponse Structure:
+ * - status: string - Success/failure status
+ * - metadata: ScrapedMetadata - Page metadata (title, URL, description)
+ * - summarized_content: string - AI-generated summary of the content
+ * - raw_content: string - Original scraped content
+ * - message: string - Optional status message
+ * 
+ * @example
+ * <WebpageScraperTab apiConfig={{ apiUrl: 'https://api.example.com', userId: 'user123' }} />
+ * 
+ * @returns {JSX.Element} A web scraping interface with content display and summarization
+ */
+
+
 export function WebpageScraperTab({ apiConfig }: WebpageScraperTabProps) {
   const [urlInput, setUrlInput] = useState('')
   const [selector, setSelector] = useState('')

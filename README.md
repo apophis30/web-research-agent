@@ -2,10 +2,12 @@
 
 This project is a web application that combines FastAPI backend with a Next.js frontend, using Redis for caching and data storage.
 
+*This is the minimal setup for running the project locally. For deployment or Docker-based execution, switch to the backend or frontend branch respectively.*
+
 ## Prerequisites
 
 - Python 3.8 or higher
-- Node.js and npm
+- Node.js (v16 or higher) and npm
 - Docker and Docker Compose
 - Git
 
@@ -15,7 +17,7 @@ This project is a web application that combines FastAPI backend with a Next.js f
 
 ```bash
 git clone <repository-url>
-cd masonry-assignment
+cd web-research-agent
 ```
 
 ### 2. Set Up Python Virtual Environment
@@ -36,11 +38,6 @@ source .venv/bin/activate
 ```bash
 # Install Python dependencies
 pip install -r requirements.txt
-
-# Install frontend dependencies
-cd frontend/masonry-frontend-next
-npm install
-cd ../..
 ```
 
 ### 4. Set Up Redis using Docker
@@ -63,7 +60,25 @@ cp .example.env .env
 - `SERPER_API_KEY_1`: Your Serper API key
 - `SERP_API_KEY`: Your SERP API key
 
-### 6. Running the Application
+### 6. Frontend Setup (Required before running launch.py)
+
+Before running the application, ensure the frontend is properly set up:
+
+```bash
+# Navigate to frontend directory
+cd frontend/masonry-frontend-next
+
+# Install dependencies (use --force if you encounter dependency conflicts)
+npm install --force
+
+# Build the frontend
+npm run build
+
+# Return to root directory
+cd ../..
+```
+
+### 7. Running the Application
 
 You have two options to run the application:
 
@@ -108,35 +123,73 @@ The application will be accessible at:
 - `main.py`: Main FastAPI application entry point
 - `launch.py`: Application launcher script
 
+## Development Workflow
+
+1. **Frontend Development**:
+   - Make changes in the `frontend/masonry-frontend-next` directory
+   - Run `npm run dev` for development with hot reloading
+   - Use `npm run build` to create production build
+
+2. **Backend Development**:
+   - Make changes in the `routers` directory
+   - The FastAPI server will automatically reload on changes
+   - Use `uvicorn routers.app:app --reload` for development
+
+3. **Testing Changes**:
+   - Frontend: `npm run test` in the frontend directory
+   - Backend: `pytest` in the root directory
+
 ## Additional Notes
 
 - The Redis instance runs on port 6379 by default
 - Make sure all required API keys are properly configured in the `.env` file
 - The application uses async operations for better performance
 - Redis is used for caching and temporary data storage
+- Frontend development server runs on port 3000
+- Backend API server runs on port 8000
 
 ## Troubleshooting
 
 If you encounter any issues:
 
-1. Ensure Redis is running:
-```bash
-docker ps | grep redis
-```
+1. **Redis Issues**:
+   ```bash
+   # Check if Redis is running
+   docker ps | grep redis
+   
+   # Restart Redis if needed
+   docker restart redis-cache
+   ```
 
-2. Check if all environment variables are properly set:
-```bash
-cat .env
-```
+2. **Environment Setup**:
+   ```bash
+   # Verify environment variables
+   cat .env
+   
+   # Check if virtual environment is activated
+   which python  # Should point to .venv directory
+   ```
 
-3. Verify all dependencies are installed:
-```bash
-# Check Python dependencies
-pip list
+3. **Dependencies**:
+   ```bash
+   # Check Python dependencies
+   pip list
+   
+   # Check Node.js dependencies
+   cd frontend/masonry-frontend-next
+   npm list
+   
+   # Clear npm cache if needed
+   npm cache clean --force
+   ```
 
-# Check Node.js dependencies
-cd frontend/masonry-frontend-next
-npm list
-```
+4. **Common Issues**:
+   - If frontend fails to start: Try `npm install --force` and `npm run build`
+   - If backend fails to start: Check if port 8000 is available
+   - If Redis connection fails: Ensure Redis container is running
+   - If API calls fail: Verify all API keys in `.env` are correct
 
-4. Check the application logs for any error messages 
+5. **Logs**:
+   - Check the application logs for detailed error messages
+   - Frontend logs are available in the browser console
+   - Backend logs are shown in the terminal running the server 
