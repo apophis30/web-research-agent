@@ -11,7 +11,7 @@ import { Sidebar, ApiConfig } from '@/components/Sidebar'
 
 export default function Home() {
   const [apiConfig, setApiConfig] = useState<ApiConfig>({
-    apiUrl: "http://localhost:8000",
+    apiUrl: "http://ec2-65-1-93-179.ap-south-1.compute.amazonaws.com:8000",
     userId: "nextjs_user"
   });
 
