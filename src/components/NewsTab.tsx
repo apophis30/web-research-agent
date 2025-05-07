@@ -7,7 +7,7 @@ import { Slider } from "@/components/ui/slider"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
   Accordion, 
   AccordionContent, 
@@ -19,6 +19,7 @@ import { Loader2 } from "lucide-react"
 import { ApiConfig } from './Sidebar'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import Image from 'next/image'
 
 interface NewsArticle {
   title?: string;
@@ -159,7 +160,7 @@ export function NewsTab({ apiConfig }: NewsTabProps) {
         <div className="mt-8 space-y-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
             <h3 className="text-xl font-semibold">
-              News Results for: '{newsResults.metadata?.query || newsQuery}'
+              News Results for: &apos;{newsResults.metadata?.query || newsQuery}&apos;
             </h3>
           </div>
 
@@ -209,10 +210,11 @@ export function NewsTab({ apiConfig }: NewsTabProps) {
                       
                       {article.thumbnail && (
                         <div className="relative w-full h-48 mb-4">
-                          <img 
+                          <Image 
                             src={article.thumbnail} 
                             alt={article.title || 'News thumbnail'} 
-                            className="w-full h-full object-cover rounded-md"
+                            fill
+                            className="object-cover rounded-md"
                           />
                         </div>
                       )}
@@ -273,11 +275,12 @@ export function NewsTab({ apiConfig }: NewsTabProps) {
                         <AccordionContent>
                           <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                             {article.thumbnail && (
-                              <div className="col-span-2">
-                                <img 
+                              <div className="col-span-2 relative h-48">
+                                <Image 
                                   src={article.thumbnail} 
                                   alt={article.title || 'News thumbnail'} 
-                                  className="w-full h-auto rounded-md"
+                                  fill
+                                  className="object-cover rounded-md"
                                 />
                               </div>
                             )}

@@ -5,7 +5,16 @@
  * @param {string} apiUrl - Base API URL
  * @returns {Promise} - Response data or error
  */
-export async function makeApiRequest(endpoint: string, data: any, apiUrl: string) {
+
+interface ApiRequestData {
+  query?: string;
+  days_back?: number;
+  max_results?: number;
+  user_id?: string;
+  [key: string]: unknown;
+}
+
+export async function makeApiRequest(endpoint: string, data: ApiRequestData, apiUrl: string) {
   try {
     const response = await fetch(`${apiUrl}/${endpoint}`, {
       method: 'POST',
