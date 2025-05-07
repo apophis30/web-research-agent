@@ -19,7 +19,6 @@ import { Loader2 } from "lucide-react"
 import { ApiConfig } from './Sidebar'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import Image from 'next/image'
 
 interface NewsArticle {
   title?: string;
@@ -210,11 +209,10 @@ export function NewsTab({ apiConfig }: NewsTabProps) {
                       
                       {article.thumbnail && (
                         <div className="relative w-full h-48 mb-4">
-                          <Image 
+                          <img 
                             src={article.thumbnail} 
                             alt={article.title || 'News thumbnail'} 
-                            fill
-                            className="object-cover rounded-md"
+                            className="w-full h-full object-cover rounded-md"
                           />
                         </div>
                       )}
@@ -275,12 +273,11 @@ export function NewsTab({ apiConfig }: NewsTabProps) {
                         <AccordionContent>
                           <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                             {article.thumbnail && (
-                              <div className="col-span-2 relative h-48">
-                                <Image 
+                              <div className="col-span-2">
+                                <img 
                                   src={article.thumbnail} 
                                   alt={article.title || 'News thumbnail'} 
-                                  fill
-                                  className="object-cover rounded-md"
+                                  className="w-full h-auto rounded-md"
                                 />
                               </div>
                             )}
