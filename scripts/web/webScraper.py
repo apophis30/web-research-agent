@@ -2,9 +2,10 @@ import os
 import asyncio
 import aiohttp
 import tiktoken
+import requests
 import logging
 import urllib.robotparser
-from pyppeteer import launch
+# from pyppeteer import launch
 from bs4 import BeautifulSoup
 from markdownify import markdownify as md
 
@@ -367,15 +368,24 @@ async def read_webpage(user_google_id: str, url: str):
 
 async def scrape_webpage(user_google_id: str, url: str, timeout: int = 10, selector_query: str = ""):
     """
-    Scrape a webpage using requests and BeautifulSoup (no browser),
-    convert the content to markdown, and process it as before.
+    Scrape a webpage using HTTP requests and BeautifulSoup (without a browser),
+    convert the HTML content to markdown, split it into manageable chunks, and
+    summarize it using an LLM, with Redis caching to improve efficiency.
+
+    Args:
+        user_google_id (str): The unique Google ID of the user requesting the scrape.
+        url (str): The URL of the webpage to scrape.
+        timeout (int, optional): Timeout for the HTTP request in seconds. Defaults to 10.
+        selector_query (str, optional): A selector-based query to focus the summarization on. Defaults to "".
+
+    Returns:
+        dict: A dictionary containing:
+            - status (str): The result status ("success" or "error").
+            - message (str): A descriptive message about the process outcome.
+            - summarized_content (str or None): The summarized markdown content, if successful.
+            - metadata (dict or None): Metadata including page title and URL.
     """
-    import asyncio
-    import logging
-    import tiktoken
-    import requests
-    from bs4 import BeautifulSoup
-    from markdownify import markdownify as md
+    
     
     logger = logging.getLogger(__name__.rsplit('.', 1)[0])
     
@@ -472,8 +482,21 @@ async def scrape_webpage(user_google_id: str, url: str, timeout: int = 10, selec
 
 async def summarize_pages(pages, metadata, url, selector_query=""):
     """
-    Helper function to summarize pages of content.
-    This is separated to allow reuse when content is loaded from cache.
+    Summarize a list of markdown content chunks using an LLM,
+    optionally aggregating multiple chunk summaries into a final summary.
+
+    Args:
+        pages (List[str]): A list of markdown text chunks representing the page content.
+        metadata (dict): Metadata associated with the content (e.g., title, URL).
+        url (str): The URL from which the content was scraped.
+        selector_query (str, optional): A query to focus the summarization on specific content. Defaults to "".
+
+    Returns:
+        dict: A dictionary containing:
+            - status (str): The result status ("success" or "error").
+            - message (str): A message describing the result.
+            - summarized_content (str): The final summarized content.
+            - metadata (dict): The provided metadata passed through.
     """
     import logging
     
@@ -717,519 +740,3 @@ async def summarize_pages(pages, metadata, url, selector_query=""):
 #         "summarized_content": final_summary,
 #         "metadata": cached_data.get("metadata") if cached_data else metadata
 #     }
-
-
-# async def scrape_webpage(user_google_id: str, url: str, timeout: int = 10, selector_query: str = ""):
-#     """
-#     Scrape a webpage using a headless browser, convert the content to markdown,
-#     and split it into chunks of roughly 10,000 tokens. Each chunk is then passed to the
-#     "gpt-4o-mini" model (with an optional selector query) for summarization.
-#     If the content spans multiple chunks, the individual summaries are aggregated into a 
-#     final concise summary. The scraped markdown pages and metadata are cached in Redis for 
-#     faster re-access.
-
-#     Args:
-#         user_google_id (str): User identifier used for caching.
-#         url (str): The URL of the webpage to scrape (must include http:// or https://).
-#         timeout (int, optional): Maximum number of seconds to wait for page loading (default 10 seconds).
-#         selector_query (str, optional): A query defining which section to focus on when summarizing.
-
-#     Returns:
-#         dict: A dictionary containing:
-#             - status (str): "success" or "error".
-#             - message (str): Informational message.
-#             - summarized_content (str or None): The final summarized text of the webpage.
-#             - metadata (dict or None): Metadata such as title and URL.
-#     """
-    
-#     stream_id = f"{user_google_id}:{url}"
-
-#     # Check if markdown pages and metadata are cached.
-#     cached_data = await get_stream_data_from_redis(stream_id)
-#     if cached_data:
-#         logger.info(f"Using cached data for {url}")
-#         pages = cached_data.get("pages", [])
-#         metadata = cached_data.get("metadata", {})
-#     else:
-#         browser = None
-#         try:
-#             # Improved browser launch with more stable configurations
-#             from pyppeteer import launch
-#             browser = await launch(
-#                 headless=True, 
-#                 args=[
-#                     '--no-sandbox',
-#                     '--disable-setuid-sandbox',
-#                     '--disable-dev-shm-usage',
-#                     '--disable-accelerated-2d-canvas',
-#                     '--no-first-run',
-#                     '--no-zygote',
-#                     '--single-process',
-#                     '--disable-gpu'
-#                 ],
-#                 handleSIGINT=False,  # Let the main process handle SIGINT
-#                 handleSIGTERM=False, # Let the main process handle SIGTERM
-#                 handleSIGHUP=False   # Let the main process handle SIGHUP
-#             )
-            
-#             page = await browser.newPage()
-            
-#             # Set page timeout and other configurations
-#             await page.setDefaultNavigationTimeout(timeout * 1000)  # Convert to milliseconds
-#             await page.setRequestInterception(True)
-            
-#             # Skip unnecessary resources to speed up loading
-#             async def intercept(request):
-#                 if request.resourceType in ['image', 'media', 'font']:
-#                     await request.abort()
-#                 else:
-#                     await request.continue_()
-            
-#             page.on('request', intercept)
-            
-#             try:
-#                 # Navigate to the URL with proper error handling
-#                 response = await page.goto(url, {
-#                     'waitUntil': 'networkidle0',
-#                     'timeout': timeout * 1000
-#                 })
-                
-#                 if not response or response.status >= 400:
-#                     return {
-#                         "status": "error",
-#                         "message": f"Error scraping {url}: HTTP status {response.status if response else 'No response'}",
-#                         "summarized_content": None,
-#                         "metadata": None
-#                     }
-                
-#             except asyncio.TimeoutError:
-#                 logger.warning(f"Timeout reached while loading {url}. Proceeding with available content.")
-#             except Exception as nav_err:
-#                 logger.error(f"Navigation error for {url}: {str(nav_err)}")
-#                 return {
-#                     "status": "error",
-#                     "message": f"Navigation error for {url}: {str(nav_err)}",
-#                     "summarized_content": None,
-#                     "metadata": None
-#                 }
-
-#             try:
-#                 # Get HTML content and page title with timeout
-#                 html_content = await asyncio.wait_for(page.content(), timeout=5)
-#                 title = await asyncio.wait_for(page.title(), timeout=2) or "Untitled Page"
-#             except asyncio.TimeoutError:
-#                 logger.warning(f"Timeout while getting content from {url}. Using partial content.")
-#                 # Try again without waiting for network idle
-#                 html_content = await page.evaluate('() => document.documentElement.outerHTML')
-#                 title = await page.evaluate('() => document.title') or "Untitled Page"
-
-#             # Convert HTML to Markdown using markdownify.
-#             markdown_content = md(html_content)
-
-#             # Tokenize and split the markdown into chunks of ~10,000 tokens.
-#             encoder = tiktoken.get_encoding("o200k_base")
-#             tokens = encoder.encode(markdown_content)
-#             chunk_size = 10000  # Changed from 50000 to 10000 as per function description
-#             pages = [
-#                 encoder.decode(tokens[i:i + chunk_size])
-#                 for i in range(0, len(tokens), chunk_size)
-#             ]
-
-#             metadata = {"title": title, "url": url}
-
-#             # Cache the pages and metadata in Redis.
-#             cache_payload = {
-#                 "pages": pages,
-#                 "metadata": metadata
-#             }
-            
-#             try:
-#                 await store_stream_data_in_redis(stream_id, cache_payload)
-#                 logger.info(f"Successfully cached content from {url}")
-#             except Exception as cache_err:
-#                 logger.warning(f"Failed to cache content from {url}: {str(cache_err)}")
-            
-#             logger.info(f"Fetched page content from {url}")
-            
-#         except Exception as e:
-#             logger.error(f"Error scraping {url}: {str(e)}")
-#             return {
-#                 "status": "error",
-#                 "message": f"Error scraping {url}: {str(e)}",
-#                 "summarized_content": None,
-#                 "metadata": None
-#             }
-#         finally:
-#             if browser:
-#                 try:
-#                     await asyncio.wait_for(browser.close(), timeout=5)
-#                     logger.info("Browser closed successfully")
-#                 except (asyncio.TimeoutError, Exception) as close_err:
-#                     logger.error(f"Error closing browser: {str(close_err)}")
-#                     # Force close as a fallback
-#                     try:
-#                         import psutil
-#                         import os
-#                         process = psutil.Process(os.getpid())
-#                         for child in process.children(recursive=True):
-#                             if "chromium" in child.name().lower() or "chrome" in child.name().lower():
-#                                 child.terminate()
-#                         logger.info("Force terminated browser processes")
-#                     except Exception as ps_err:
-#                         logger.error(f"Failed to force close browser: {str(ps_err)}")
-
-#     # Skip summarization if no content was retrieved
-#     if not pages or all(not page.strip() for page in pages):
-#         return {
-#             "status": "error",
-#             "message": f"No content retrieved from {url}",
-#             "summarized_content": None,
-#             "metadata": metadata if 'metadata' in locals() else None
-#         }
-
-#     # Summarize each chunk using the "gpt-4o-mini" model.
-#     chunk_summaries = []
-#     for i, chunk in enumerate(pages):
-#         system_prompt = (
-#             "You are a helpful assistant that extracts and summarizes the content provided in markdown format. "
-#             "Summary should be of appropriate length to encompass most of the content."
-#         )
-#         if selector_query:
-#             system_prompt += f" Focus on the following aspect: {selector_query}."
-#         else:
-#             system_prompt += " Summarize the content comprehensively."
-            
-#         messages = [
-#             {"role": "system", "content": system_prompt},
-#             {"role": "user", "content": f"Content (chunk {i+1} of {len(pages)}): {chunk}"}
-#         ]
-        
-#         try:
-#             response = await client.generate_data_with_llm(
-#                 messages=messages, 
-#                 model="gpt-4o-mini", 
-#                 temperature=0.2
-#             )
-            
-#             # Convert to dict and check for valid response
-#             response_dict = response.to_dict()
-#             if (response_dict.get("choices") and 
-#                 response_dict["choices"][0].get("finish_reason") == "stop" and
-#                 response_dict["choices"][0].get("message", {}).get("content")):
-#                 summary = response_dict["choices"][0]["message"]["content"]
-#             else:
-#                 summary = f"Summary not completed for chunk {i+1}."
-#                 logger.warning(f"Incomplete summary for {url}, chunk {i+1}")
-                
-#         except Exception as llm_err:
-#             logger.error(f"Error during summarization for {url}, chunk {i+1}: {str(llm_err)}")
-#             summary = f"Error summarizing chunk {i+1}: {str(llm_err)}"
-            
-#         chunk_summaries.append(summary)
-
-#     # If more than one chunk, aggregate individual summaries.
-#     if len(chunk_summaries) > 1:
-#         aggregated_content = "\n\n".join(chunk_summaries)
-#         aggregation_prompt = (
-#             "You are a helpful assistant that aggregates multiple summaries into a final concise summary."
-#         )
-#         messages = [
-#             {"role": "system", "content": aggregation_prompt},
-#             {"role": "user", "content": f"Summaries from {url}: {aggregated_content}"}
-#         ]
-        
-#         try:
-#             agg_response = await client.generate_data_with_llm(
-#                 messages=messages, 
-#                 model="gpt-4o-mini", 
-#                 temperature=0.2
-#             )
-            
-#             # Convert to dict and check for valid response
-#             agg_response_dict = agg_response.to_dict()
-#             if (agg_response_dict.get("choices") and 
-#                 agg_response_dict["choices"][0].get("finish_reason") == "stop" and
-#                 agg_response_dict["choices"][0].get("message", {}).get("content")):
-#                 final_summary = agg_response_dict["choices"][0]["message"]["content"]
-#             else:
-#                 logger.warning(f"Incomplete aggregated summary for {url}")
-#                 final_summary = aggregated_content
-                
-#         except Exception as agg_err:
-#             logger.error(f"Error during aggregation for {url}: {str(agg_err)}")
-#             final_summary = aggregated_content
-#     else:
-#         final_summary = chunk_summaries[0] if chunk_summaries else ""
-
-#     return {
-#         "status": "success",
-#         "message": f"Successfully summarized content from {url}.",
-#         "summarized_content": final_summary,
-#         "metadata": cached_data.get("metadata") if cached_data else metadata
-#     }
-
-
-# async def scrape_webpage(user_google_id: str, url: str, timeout: int = 10, selector_query: str = ""):
-#     """
-#     Scrape a webpage using a headless browser, convert the content to markdown,
-#     and split it into chunks of roughly 10,000 tokens. Each chunk is then passed to the
-#     "gpt-4o-mini" model (with an optional selector query) for summarization.
-#     If the content spans multiple chunks, the individual summaries are aggregated into a 
-#     final concise summary. The scraped markdown pages and metadata are cached in Redis for 
-#     faster re-access.
-
-#     Args:
-#         user_google_id (str): User identifier used for caching.
-#         url (str): The URL of the webpage to scrape (must include http:// or https://).
-#         timeout (int, optional): Maximum number of seconds to wait for page loading (default 10 seconds).
-#         selector_query (str, optional): A query defining which section to focus on when summarizing.
-
-#     Returns:
-#         dict: A dictionary containing:
-#             - status (str): "success" or "error".
-#             - message (str): Informational message.
-#             - summarized_content (str or None): The final summarized text of the webpage.
-#             - metadata (dict or None): Metadata such as title and URL.
-#     """
-#     import asyncio
-#     import logging
-#     import os
-#     import tiktoken
-#     from markdownify import markdownify as md
-    
-#     logger = logging.getLogger(__name__.rsplit('.', 1)[0])
-
-#     stream_id = f"{user_google_id}:{url}"
-
-#     # Check if markdown pages and metadata are cached.
-#     try:
-#         cached_data = await get_stream_data_from_redis(stream_id)
-#         if cached_data:
-#             logger.info(f"Using cached data for {url}")
-#             pages = cached_data.get("pages", [])
-#             metadata = cached_data.get("metadata", {})
-            
-#             # Skip to summarization with cached content
-#             logger.info(f"Using {len(pages)} cached pages for {url}")
-#             return await summarize_pages(pages, metadata, url, selector_query)
-#     except Exception as redis_err:
-#         logger.error(f"Error accessing Redis cache: {str(redis_err)}")
-#         # Continue with scraping even if cache access fails
-#         cached_data = None
-
-#     browser = None
-#     try:
-#         # Import pyppeteer here to reduce import time if cached data is used
-#         from pyppeteer import launch
-        
-#         # Set a custom Chrome path if available in the environment
-#         # This can help if the bundled Chromium is causing issues
-#         executable_path = os.environ.get('CHROME_EXECUTABLE_PATH', None)
-        
-#         # More robust browser launch options
-#         browser_args = [
-#             '--no-sandbox',
-#             '--disable-setuid-sandbox',
-#             '--disable-dev-shm-usage',
-#             '--disable-accelerated-2d-canvas',
-#             '--no-first-run',
-#             '--no-zygote',
-#             '--single-process',
-#             '--disable-gpu',
-#             '--disable-extensions',
-#             '--disable-software-rasterizer',
-#             '--ignore-certificate-errors',
-#             '--disable-web-security'
-#         ]
-        
-#         logger.info(f"Launching browser to scrape {url}")
-#         browser = await launch(
-#             headless=True,
-#             args=browser_args,
-#             executablePath=executable_path,
-#             ignoreHTTPSErrors=True,
-#             handleSIGINT=False,
-#             handleSIGTERM=False,
-#             handleSIGHUP=False,
-#             # Increase timeouts for browser operations
-#             defaultViewport={'width': 1280, 'height': 800}
-#         )
-        
-#         logger.info(f"Browser launched successfully for {url}")
-#         page = await browser.newPage()
-        
-#         # Set page timeout and other configurations
-#         await page.setDefaultNavigationTimeout(timeout * 1000)  # Convert to milliseconds
-#         await page.setJavaScriptEnabled(True)  # Ensure JavaScript is enabled
-        
-#         # Skip resource loading for faster scraping
-#         await page.setRequestInterception(True)
-        
-#         async def intercept(request):
-#             if request.resourceType in ['image', 'media', 'font', 'stylesheet', 'other']:
-#                 await request.abort()
-#             else:
-#                 await request.continue_()
-        
-#         page.on('request', intercept)
-        
-#         logger.info(f"Navigating to {url}")
-#         try:
-#             # Navigate to the URL with proper error handling
-#             # Use 'domcontentloaded' instead of 'networkidle0' for faster loading
-#             response = await page.goto(url, {
-#                 'waitUntil': 'domcontentloaded',
-#                 'timeout': timeout * 1000
-#             })
-            
-#             if not response:
-#                 logger.error(f"No response received for {url}")
-#                 return {
-#                     "status": "error",
-#                     "message": f"No response received for {url}",
-#                     "summarized_content": None,
-#                     "metadata": None
-#                 }
-                
-#             if response.status >= 400:
-#                 logger.error(f"HTTP error {response.status} for {url}")
-#                 return {
-#                     "status": "error",
-#                     "message": f"Error scraping {url}: HTTP status {response.status}",
-#                     "summarized_content": None,
-#                     "metadata": None
-#                 }
-            
-#             logger.info(f"Successfully loaded page at {url}")
-            
-#         except asyncio.TimeoutError:
-#             logger.warning(f"Timeout reached while loading {url}. Proceeding with available content.")
-#         except Exception as nav_err:
-#             logger.error(f"Navigation error for {url}: {str(nav_err)}")
-#             return {
-#                 "status": "error",
-#                 "message": f"Navigation error for {url}: {str(nav_err)}",
-#                 "summarized_content": None,
-#                 "metadata": None
-#             }
-
-#         # Wait a bit to ensure content is loaded
-#         try:
-#             await asyncio.sleep(2)  # Short delay to let JS render
-            
-#             # Wait for body to be available
-#             await page.waitForSelector('body', {'timeout': 5000})
-            
-#             # Get HTML content and page title with timeouts
-#             html_content = await page.evaluate('() => document.documentElement.outerHTML', timeout=5000)
-#             title = await page.evaluate('() => document.title || "Untitled Page"', timeout=2000)
-            
-#             logger.info(f"Successfully extracted content from {url}, title: {title}")
-            
-#         except asyncio.TimeoutError:
-#             logger.warning(f"Timeout while getting content from {url}. Using partial content.")
-#             # Fallback to get whatever content is available
-#             try:
-#                 html_content = await page.content()
-#                 title = await page.title() or "Untitled Page"
-#             except Exception as content_err:
-#                 logger.error(f"Error getting content: {str(content_err)}")
-#                 html_content = "<html><body>Failed to extract content</body></html>"
-#                 title = "Content Extraction Failed"
-
-#         # Handle empty content
-#         if not html_content or html_content.strip() == "":
-#             logger.error(f"Empty content received from {url}")
-#             return {
-#                 "status": "error",
-#                 "message": f"Empty content received from {url}",
-#                 "summarized_content": None,
-#                 "metadata": None
-#             }
-
-#         # Convert HTML to Markdown using markdownify
-#         try:
-#             markdown_content = md(html_content)
-#             logger.info(f"Successfully converted HTML to markdown for {url}")
-#         except Exception as md_err:
-#             logger.error(f"Error converting to markdown: {str(md_err)}")
-#             return {
-#                 "status": "error",
-#                 "message": f"Error converting content to markdown: {str(md_err)}",
-#                 "summarized_content": None,
-#                 "metadata": None
-#             }
-
-#         # Check for empty markdown
-#         if not markdown_content or markdown_content.strip() == "":
-#             logger.error(f"Empty markdown content for {url}")
-#             return {
-#                 "status": "error",
-#                 "message": f"Empty markdown content for {url}",
-#                 "summarized_content": None,
-#                 "metadata": None
-#             }
-
-#         # Tokenize and split the markdown into chunks
-#         try:
-#             encoder = tiktoken.get_encoding("o200k_base")
-#             tokens = encoder.encode(markdown_content)
-#             chunk_size = 10000
-#             pages = [
-#                 encoder.decode(tokens[i:i + chunk_size])
-#                 for i in range(0, len(tokens), chunk_size)
-#             ]
-#             logger.info(f"Split content into {len(pages)} chunks for {url}")
-#         except Exception as token_err:
-#             logger.error(f"Error tokenizing content: {str(token_err)}")
-#             # Fallback to simple text splitting if tokenization fails
-#             pages = [markdown_content]
-
-#         metadata = {"title": title, "url": url}
-
-#         # Cache the pages and metadata in Redis
-#         try:
-#             cache_payload = {
-#                 "pages": pages,
-#                 "metadata": metadata
-#             }
-#             await store_stream_data_in_redis(stream_id, cache_payload)
-#             logger.info(f"Successfully cached content from {url}")
-#         except Exception as cache_err:
-#             logger.warning(f"Failed to cache content from {url}: {str(cache_err)}")
-        
-#     except Exception as e:
-#         logger.error(f"Error scraping {url}: {str(e)}")
-#         return {
-#             "status": "error",
-#             "message": f"Error scraping {url}: {str(e)}",
-#             "summarized_content": None,
-#             "metadata": None
-#         }
-#     finally:
-#         if browser:
-#             try:
-#                 logger.info(f"Closing browser for {url}")
-#                 await asyncio.wait_for(browser.close(), timeout=5)
-#                 logger.info("Browser closed successfully")
-#             except (asyncio.TimeoutError, Exception) as close_err:
-#                 logger.error(f"Error closing browser: {str(close_err)}")
-#                 # Force close as a fallback
-#                 try:
-#                     import psutil
-#                     import os
-#                     import signal
-#                     process = psutil.Process(os.getpid())
-#                     for child in process.children(recursive=True):
-#                         if "chromium" in child.name().lower() or "chrome" in child.name().lower():
-#                             try:
-#                                 os.kill(child.pid, signal.SIGKILL)
-#                                 logger.info(f"Force killed browser process {child.pid}")
-#                             except Exception:
-#                                 pass
-#                     logger.info("Force terminated browser processes")
-#                 except Exception as ps_err:
-#                     logger.error(f"Failed to force close browser: {str(ps_err)}")
-
-#     # Process the pages for summarization
-#     return await summarize_pages(pages, metadata, url, selector_query)
