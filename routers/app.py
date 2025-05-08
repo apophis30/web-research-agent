@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, Field
+from typing import Optional, Dict, Any
 import asyncio
 import os
 import uuid
@@ -27,6 +27,12 @@ from scripts.web.newsAggregator import (
 from scripts.web.webScraper import (
     search_web,
     scrape_webpage
+)
+
+from scripts.web.chatEngine import (
+    chat,
+    get_conversation_history,
+    update_conversation_history
 )
 
 # Define signal handler function
@@ -124,6 +130,31 @@ class WebpageRequest(BaseModel):
     selector_query: Optional[str] = None
     timeout: Optional[int] = 10
 
+class ChatRequest(BaseModel):
+    message: str = Field(..., description="The user's message")
+    user_id: Optional[str] = Field(None, description="Unique identifier for the user")
+    session_id: Optional[str] = Field(None, description="Unique identifier for the conversation session")
+
+class ChatResponse(BaseModel):
+    status: str
+    message: str
+    response: str
+    metadata: Dict[str, Any]
+    session_id: str
+    user_id: str
+
+async def get_or_create_user_id(request_user_id: Optional[str] = None) -> str:
+    """
+    Get the provided user ID or generate a new one if not provided.
+    
+    Args:
+        request_user_id (Optional[str]): User ID from the request, if provided.
+        
+    Returns:
+        str: A valid user ID
+    """
+    return request_user_id or f"anonymous_{uuid.uuid4().hex[:8]}"
+
 @app.get("/")
 async def root():
     return {"message": "Welcome to the Web Research API"}
@@ -196,6 +227,119 @@ async def news(request: WebSearchRequest, days_back: int = Query(7, ge=1, le=30)
     except Exception as e:
         logger.error(f"News fetching failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"News fetching failed: {str(e)}")
+
+@app.post("/chat", response_model=ChatResponse)
+async def chat_endpoint(request: ChatRequest):
+    """
+    Process a chat message using the conversational AI assistant.
+    This endpoint:
+    1. Maintains conversation history
+    2. Detects user intent
+    3. Executes appropriate research tools based on the intent
+    4. Generates a contextual response
+    
+    Args:
+        request (ChatRequest): The chat request containing the user's message
+        
+    Returns:
+        ChatResponse: The assistant's response and metadata
+    """
+    # Get or create user and session IDs
+    user_id = await get_or_create_user_id(request.user_id)
+    session_id = request.session_id or f"session_{uuid.uuid4().hex[:8]}"
+    
+    try:
+        # Use the combined user+session identifier for conversation history management
+        conversation_user_id = f"{user_id}:{session_id}"
+        
+        # Process the chat message
+        logger.info(f"Processing chat message for user {user_id}, session {session_id}")
+        response = await chat(conversation_user_id, request.message)
+        
+        # Add session and user IDs to the response
+        response["session_id"] = session_id
+        response["user_id"] = user_id
+        
+        return response
+    except Exception as e:
+        logger.error(f"Chat processing failed: {str(e)}")
+        # Return a structured error response
+        return {
+            "status": "error",
+            "message": f"Chat processing failed: {str(e)}",
+            "response": "I'm sorry, I encountered an error while processing your message. Please try again.",
+            "metadata": {
+                "error": str(e)
+            },
+            "session_id": session_id,
+            "user_id": user_id
+        }
+
+@app.get("/chat/history")
+async def get_chat_history(
+    user_id: str = Query(..., description="User ID"),
+    session_id: str = Query(..., description="Session ID")
+):
+    """
+    Retrieve the chat history for a specific user and session.
+    
+    Args:
+        user_id (str): The user identifier
+        session_id (str): The session identifier
+        
+    Returns:
+        Dict: The chat history
+    """
+    conversation_user_id = f"{user_id}:{session_id}"
+    
+    try:
+        history = await get_conversation_history(conversation_user_id)
+        return {
+            "status": "success",
+            "user_id": user_id,
+            "session_id": session_id,
+            "history": history
+        }
+    except Exception as e:
+        logger.error(f"Failed to retrieve chat history: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to retrieve chat history: {str(e)}"
+        )
+
+@app.delete("/chat/history")
+async def clear_chat_history(
+    user_id: str = Query(..., description="User ID"),
+    session_id: str = Query(..., description="Session ID")
+):
+    """
+    Clear the chat history for a specific user and session.
+    
+    Args:
+        user_id (str): The user identifier
+        session_id (str): The session identifier
+        
+    Returns:
+        Dict: Status message
+    """
+    conversation_user_id = f"{user_id}:{session_id}"
+    
+    try:
+        # Update with empty list to clear the history
+        await update_conversation_history(conversation_user_id, [])
+        return {
+            "status": "success",
+            "message": "Chat history cleared successfully",
+            "user_id": user_id,
+            "session_id": session_id
+        }
+    except Exception as e:
+        logger.error(f"Failed to clear chat history: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to clear chat history: {str(e)}"
+        )
+
 
 if __name__ == "__main__":
     import uvicorn

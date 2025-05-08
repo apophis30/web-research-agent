@@ -2,7 +2,9 @@
 
 This project is a web application that combines FastAPI backend with a Next.js frontend, using Redis for caching and data storage.
 
-*This is the minimal setup for running the project locally. For deployment or Docker-based execution, switch to the backend or frontend branch respectively.*
+*Complete docs can be found in docs.md .*
+
+*This is the minimal setup for running the project locally. For deployment or Docker-based execution, switch to the backend-chat or frontend-chat branch respectively.*
 
 ## Prerequisites
 
