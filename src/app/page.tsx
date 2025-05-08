@@ -6,12 +6,15 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ResearchTab } from '@/components/ResearchTab'
 import { WebSearchTab } from '@/components/WebSearchTab'
 import { NewsTab } from '@/components/NewsTab'
+import Link from "next/link";
 import { WebpageScraperTab } from '@/components/WebpageScraperTab'
 import { Sidebar, ApiConfig } from '@/components/Sidebar'
 
+// http://ec2-13-201-189-62.ap-south-1.compute.amazonaws.com:8000
+
 export default function Home() {
   const [apiConfig, setApiConfig] = useState<ApiConfig>({
-    apiUrl: "http://ec2-13-201-189-62.ap-south-1.compute.amazonaws.com:8000",
+    apiUrl: "http://localhost:8000",
     userId: "nextjs_user"
   });
 
@@ -28,11 +31,12 @@ export default function Home() {
         <h1 className="text-3xl font-bold text-gray-900 mb-6">Web Research Assistant</h1>
         
         <Tabs defaultValue="research" className="w-full">
-          <TabsList className="grid grid-cols-4 mb-6">
+          <TabsList className="grid grid-cols-5 mb-6">
             <TabsTrigger value="research">Research</TabsTrigger>
             <TabsTrigger value="search">Web Search</TabsTrigger>
             <TabsTrigger value="news">News</TabsTrigger>
             <TabsTrigger value="scraper">Webpage Scraper</TabsTrigger>
+            <TabsTrigger value="chat" className="text-gray-400 data-[state=active]:text-black"><Link href="/chat" className="no-underline">Chat Agent</Link></TabsTrigger>
           </TabsList>
 
           <Card>
