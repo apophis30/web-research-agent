@@ -5,7 +5,8 @@ from redis import asyncio as aioredis
 from typing import Dict, Any, Optional
 
 # Initialize Redis client
-redis_client = aioredis.from_url(os.getenv("REDIS_URL", "redis://redis:6379"), decode_responses=True)
+# For Docker Instance: redis://redis:6379
+redis_client = aioredis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379"), decode_responses=True)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
