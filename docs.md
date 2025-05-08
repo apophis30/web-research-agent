@@ -131,6 +131,20 @@ The agent synthesizes information by:
 
 Implementation: Uses advanced LLM capabilities to process and synthesize multiple sources.
 
+### 4.5 Chatting Overview
+
+The chat function orchestrates intelligent assistant conversations by:
+- Retrieving and managing conversation history using Redis
+- Storing and analyzing user messages for intent detection
+- Executing relevant tools (e.g., web search, news, scraping, research)
+- Generating context-aware responses using GPT-4o-mini
+- Summarizing older messages when token limits are reached
+- Handling errors gracefully and returning structured responses
+
+Implementation: Combines Redis-based memory, tool-assisted retrieval, and advanced LLM generation within an async, token-managed architecture.
+
+![Chat Flow](assets/chatFlow.png)
+
 ## 5. Technical Implementation
 
 ### 5.1 Core Technologies
