@@ -1,4 +1,4 @@
-# Masonry Assignment
+# Web Research Agent
 
 This project is a web application that combines FastAPI backend with a Next.js frontend, using Redis for caching and data storage.
 
